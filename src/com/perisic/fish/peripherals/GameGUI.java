@@ -1,51 +1,133 @@
 package com.perisic.fish.peripherals;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 import com.perisic.fish.engine.GameEngine;
 
 /**
- * A Simple Graphical User Interface for the Fish Game.
+ * Graphical User Interface for the Fish Game.
  * Based on the unit example by Marc Conrad.
- * Lives and game-over handling added by me with help from Claude (AI assistant).
- *
+ * 
+ * This class only handles DISPLAY and USER EVENTS. The rules are in GameEngine.
  */
 public class GameGUI extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = -107785653906635L;
 
+	private static final int TICK_MS = 100; // how often the timer bar updates
+
+	GameEngine myGame = null;
+	BufferedImage currentGame = null;
+
+	JLabel questArea = null;
+	JLabel headerLabel = null;
+	JLabel feedbackLabel = null;
+	JProgressBar timeBar = null;
+	JButton[] buttons = new JButton[10];
+
+	Timer roundTimer = null; // javax.swing.Timer: fires an event every TICK_MS
+	int timeLeftMs = 0;
+	String playerName = null;
+
 	/**
-	 * Method that is called when a button has been pressed (this is the event handler).
+	 * EVENT 1: an answer button has been pressed (also called by keyboard shortcuts).
 	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		int solution = Integer.parseInt(e.getActionCommand());
+		int levelBefore = myGame.getLevel();
 		boolean correct = myGame.checkSolution(solution);
-		int score = myGame.getScore();
-		int lives = myGame.getLives();
+
 		if (correct) {
-			currentGame = myGame.nextGame();
-			questArea.setIcon(new ImageIcon(currentGame));
-			infoArea.setText("Good!  Score: " + score + "  Lives: " + lives);
+			String msg = "Correct!  Streak: " + myGame.getStreak();
+			if (myGame.getLevel() > levelBefore) {
+				msg = "LEVEL UP! Now level " + myGame.getLevel() + " - less time per round!";
+			}
+			feedbackLabel.setText(msg);
+			feedbackLabel.setForeground(new Color(0, 130, 0));
+			showNewImage();
 		} else if (myGame.isGameOver()) {
-			JOptionPane.showMessageDialog(this, "Game over! Final score: " + score);
-			myGame.reset();
-			currentGame = myGame.nextGame();
-			questArea.setIcon(new ImageIcon(currentGame));
-			infoArea.setText("New game!  Score: 0  Lives: " + myGame.getLives());
+			endGame();
 		} else {
-			infoArea.setText("Oops. Try again!  Score: " + score + "  Lives: " + lives);
+			feedbackLabel.setText("Wrong! Try again.");
+			feedbackLabel.setForeground(Color.RED);
+		}
+		updateHeader();
+	}
+
+	/**
+	 * EVENT 2: the round timer ticks (every 100 ms).
+	 */
+	private void onTimerTick() {
+		timeLeftMs -= TICK_MS;
+		timeBar.setValue(Math.max(timeLeftMs, 0));
+
+		if (timeLeftMs < timeBar.getMaximum() * 0.3) {
+			timeBar.setForeground(Color.RED); // running out of time
+		}
+
+		if (timeLeftMs <= 0) {
+			roundTimer.stop();
+			int answer = myGame.getCurrentSolution();
+			myGame.timeExpired();
+			if (myGame.isGameOver()) {
+				endGame();
+			} else {
+				feedbackLabel.setText("Time's up! The answer was " + answer + ".");
+				feedbackLabel.setForeground(Color.RED);
+				showNewImage();
+			}
+			updateHeader();
 		}
 	}
 
-	JLabel questArea = null;
-	GameEngine myGame = null;
-	BufferedImage currentGame = null;
-	JTextArea infoArea = null;
+	/** Loads a new image from the web service and restarts the timer. */
+	private void showNewImage() {
+		currentGame = myGame.nextGame();
+		questArea.setIcon(new ImageIcon(currentGame));
+		restartTimer();
+	}
+
+	private void restartTimer() {
+		roundTimer.stop();
+		timeLeftMs = myGame.getTimeLimitSeconds() * 1000;
+		timeBar.setMaximum(timeLeftMs);
+		timeBar.setValue(timeLeftMs);
+		timeBar.setForeground(new Color(0, 160, 0));
+		roundTimer.start();
+	}
+
+	private void endGame() {
+		roundTimer.stop();
+		JOptionPane.showMessageDialog(this,
+				"Game over!\nFinal score: " + myGame.getScore() + "\nBest this session: " + myGame.getHighScore());
+		myGame.reset();
+		feedbackLabel.setText("New game - good luck!");
+		feedbackLabel.setForeground(Color.DARK_GRAY);
+		showNewImage();
+		updateHeader();
+	}
+
+	private void updateHeader() {
+		StringBuilder hearts = new StringBuilder();
+		for (int i = 0; i < myGame.getLives(); i++) {
+			hearts.append("\u2665 "); // heart symbol
+		}
+		String who = (playerName == null) ? "Guest" : playerName;
+		headerLabel.setText(who + "   |   Level " + myGame.getLevel() + "   |   Score " + myGame.getScore()
+				+ "   |   Best " + myGame.getHighScore() + "   |   Lives " + hearts);
+	}
 
 	/**
 	 * Initializes the game.
@@ -53,38 +135,86 @@ public class GameGUI extends JFrame implements ActionListener {
 	 * @param player
 	 */
 	private void initGame(String player) {
-		setSize(690, 500);
+		playerName = player;
+		setSize(800, 720);
+		setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setTitle("How many fish are there?");
-		JPanel panel = new JPanel();
+		setTitle("Fish Counter - how many fish are there?");
 
 		myGame = new GameEngine(player);
-		currentGame = myGame.nextGame();
 
-		infoArea = new JTextArea(1, 40);
+		// ----- top: header text and time bar -----
+		headerLabel = new JLabel("", SwingConstants.CENTER);
+		headerLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
 
-		infoArea.setEditable(false);
-		infoArea.setText("How many fish are there?   Score: 0  Lives: " + myGame.getLives());
+		timeBar = new JProgressBar(0, 100);
+		timeBar.setPreferredSize(new Dimension(700, 18));
 
-		JScrollPane infoPane = new JScrollPane(infoArea);
-		panel.add(infoPane);
+		JPanel top = new JPanel(new BorderLayout(0, 6));
+		top.add(headerLabel, BorderLayout.NORTH);
+		top.add(timeBar, BorderLayout.SOUTH);
 
-		ImageIcon ii = new ImageIcon(currentGame);
-		questArea = new JLabel(ii);
-		questArea.setSize(330, 600);
-
+		// ----- centre: the fish image -----
+		questArea = new JLabel("", SwingConstants.CENTER);
 		JScrollPane questPane = new JScrollPane(questArea);
-		panel.add(questPane);
 
+		// ----- bottom: feedback text and answer buttons -----
+		feedbackLabel = new JLabel("Count the FISH only (not the treasure)!", SwingConstants.CENTER);
+		feedbackLabel.setFont(new Font("SansSerif", Font.BOLD, 15));
+
+		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 6));
 		for (int i = 0; i < 10; i++) {
 			JButton btn = new JButton(String.valueOf(i));
-			panel.add(btn);
+			btn.setFont(new Font("SansSerif", Font.BOLD, 18));
+			btn.setPreferredSize(new Dimension(58, 44));
+			btn.setBackground(new Color(173, 216, 230));
 			btn.addActionListener(this);
+			buttons[i] = btn;
+			buttonPanel.add(btn);
 		}
 
-		getContentPane().add(panel);
-		panel.repaint();
+		JPanel bottom = new JPanel(new BorderLayout());
+		bottom.add(feedbackLabel, BorderLayout.NORTH);
+		bottom.add(buttonPanel, BorderLayout.SOUTH);
 
+		// ----- put it all together -----
+		JPanel root = new JPanel(new BorderLayout(10, 10));
+		root.setBorder(new EmptyBorder(10, 10, 10, 10));
+		root.add(top, BorderLayout.NORTH);
+		root.add(questPane, BorderLayout.CENTER);
+		root.add(bottom, BorderLayout.SOUTH);
+		getContentPane().add(root);
+
+		// EVENT 3: keyboard shortcuts - pressing 0-9 clicks the matching button.
+		for (int i = 0; i < 10; i++) {
+			final int digit = i;
+			Action pressDigit = new AbstractAction() {
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					buttons[digit].doClick();
+				}
+			};
+			String name = "digit" + digit;
+			JComponent rp = getRootPane();
+			rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_0 + digit, 0),
+					name);
+			rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+					.put(KeyStroke.getKeyStroke(KeyEvent.VK_NUMPAD0 + digit, 0), name);
+			rp.getActionMap().put(name, pressDigit);
+		}
+
+		// The round timer: calls onTimerTick() every TICK_MS milliseconds.
+		roundTimer = new Timer(TICK_MS, new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				onTimerTick();
+			}
+		});
+
+		showNewImage();
+		updateHeader();
 	}
 
 	/**
