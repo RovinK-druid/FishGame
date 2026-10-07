@@ -1,23 +1,27 @@
 package com.perisic.fish.peripherals;
+
+import com.perisic.fish.engine.UserStore;
+
 /**
- * Basic class. To do: 
- * link against external database.
- * signup mechanism to create account. 
- * Encryption
- * Etc.
- * @author Marc Conrad
- *
+ * Based on the unit example by Marc Conrad, which had one hard-coded user.
+ * Now it passes the work on to UserStore (saved accounts, hashed passwords).
+ * Changed by me with help from Claude (AI assistant).
  */
 public class LoginData {
+
+	private final UserStore store = new UserStore();
+
 	/**
 	 * Returns true if passwd matches the username given.
-	 * @param username
-	 * @param passwd
-	 * @return
 	 */
-	boolean checkPassword(String username, String passwd) { 
-		if( username.equals("Marc") && passwd.equals("hello26")) return true; 
-		return false; 
-		
+	boolean checkPassword(String username, String passwd) {
+		return store.checkPassword(username, passwd);
+	}
+
+	/**
+	 * Creates an account. Returns null on success, otherwise an error message.
+	 */
+	String register(String username, String passwd, String confirm) {
+		return store.register(username, passwd, confirm);
 	}
 }
