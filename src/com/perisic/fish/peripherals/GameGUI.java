@@ -9,11 +9,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import com.perisic.fish.engine.GameEngine;
+import com.perisic.fish.engine.RememberMe;
+import com.perisic.fish.engine.ScoreStore;
 
 /**
  * Graphical User Interface for the Fish Game.
@@ -39,6 +42,9 @@ public class GameGUI extends JFrame implements ActionListener {
 	Timer roundTimer = null; // javax.swing.Timer: fires an event every TICK_MS
 	int timeLeftMs = 0;
 	String playerName = null;
+
+	ScoreStore scoreStore = new ScoreStore();
+	RememberMe remember = new RememberMe();
 
 	/**
 	 * EVENT 1: an answer button has been pressed (also called by keyboard shortcuts).
@@ -108,15 +114,65 @@ public class GameGUI extends JFrame implements ActionListener {
 		roundTimer.start();
 	}
 
+	/** Game over: save the score, show the result and the high score table, start again. */
 	private void endGame() {
 		roundTimer.stop();
-		JOptionPane.showMessageDialog(this,
-				"Game over!\nFinal score: " + myGame.getScore() + "\nBest this session: " + myGame.getHighScore());
+		int finalScore = myGame.getScore();
+
+		String note = "";
+		if (playerName != null) {
+			if (scoreStore.addScore(playerName, finalScore)) {
+				note = "<br><b>New personal best!</b>";
+			}
+		} else {
+			note = "<br>(Log in to save your scores.)";
+		}
+
+		showScoreTable("<html><h3>Game over!</h3>Final score: " + finalScore + "&nbsp;&nbsp; Level reached: "
+				+ myGame.getLevel() + "<br>Best this session: " + myGame.getHighScore() + note + "</html>",
+				"Game over");
+
 		myGame.reset();
 		feedbackLabel.setText("New game - good luck!");
 		feedbackLabel.setForeground(Color.DARK_GRAY);
 		showNewImage();
 		updateHeader();
+	}
+
+	/** Shows a message with the top 5 players in a table. */
+	private void showScoreTable(String summaryHtml, String title) {
+		List<ScoreStore.Entry> top = scoreStore.top(5);
+		String[] columns = { "Rank", "Player", "Best score" };
+		Object[][] data = new Object[top.size()][3];
+		for (int i = 0; i < top.size(); i++) {
+			data[i][0] = i + 1;
+			data[i][1] = top.get(i).name;
+			data[i][2] = top.get(i).score;
+		}
+		JTable table = new JTable(data, columns);
+		table.setEnabled(false); // read only
+		JScrollPane scroll = new JScrollPane(table);
+		scroll.setPreferredSize(new Dimension(320, 130));
+
+		JPanel panel = new JPanel(new BorderLayout(0, 8));
+		panel.add(new JLabel(summaryHtml), BorderLayout.NORTH);
+		panel.add(scroll, BorderLayout.CENTER);
+		JOptionPane.showMessageDialog(this, panel, title, JOptionPane.PLAIN_MESSAGE);
+	}
+
+	/** Menu: Game > High scores. The round timer is paused while the table is open. */
+	private void viewHighScores() {
+		roundTimer.stop();
+		showScoreTable("<html><h3>High scores</h3></html>", "High scores");
+		roundTimer.start();
+	}
+
+	/** Menu: Game > Log out. Forgets the "remember me" token and goes back to the login. */
+	private void logout() {
+		roundTimer.stop();
+		remember.forget();
+		new LoginGUI(); // shows the login window
+		dispose(); // closes this game window
 	}
 
 	private void updateHeader() {
@@ -142,6 +198,20 @@ public class GameGUI extends JFrame implements ActionListener {
 		setTitle("Fish Counter - how many fish are there?");
 
 		myGame = new GameEngine(player);
+
+		// ----- menu bar -----
+		JMenuBar menuBar = new JMenuBar();
+		JMenu gameMenu = new JMenu("Game");
+		JMenuItem scoresItem = new JMenuItem("High scores");
+		JMenuItem logoutItem = new JMenuItem("Log out");
+		gameMenu.add(scoresItem);
+		gameMenu.add(logoutItem);
+		menuBar.add(gameMenu);
+		setJMenuBar(menuBar);
+
+		// EVENT 4: menu items
+		scoresItem.addActionListener(e -> viewHighScores());
+		logoutItem.addActionListener(e -> logout());
 
 		// ----- top: header text and time bar -----
 		headerLabel = new JLabel("", SwingConstants.CENTER);
