@@ -2,9 +2,12 @@ package com.perisic.fish.peripherals;
 /*
  * Based on the unit example by Marc Conrad, which was adapted from
  * https://best-programming-tricks.blogspot.com/2011/07/how-to-make-login-form-with-java-gui.html
+ * Layout, "Create account" button, Enter key handling, "Remember me" and the underwater look
  */
 
+import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -50,43 +53,56 @@ public class LoginGUI extends JFrame {
 			return;
 		}
 
-		JPanel panel = new JPanel(new GridBagLayout());
-		panel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+		// the underwater background with a white "card" in the middle
+		WaterPanel root = new WaterPanel();
+		root.setLayout(new GridBagLayout());
+		root.setPreferredSize(new Dimension(460, 400));
+
+		JPanel card = new JPanel(new GridBagLayout());
+		card.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Theme.NAVY, 3),
+				BorderFactory.createEmptyBorder(20, 30, 20, 30)));
 		GridBagConstraints gc = new GridBagConstraints();
 		gc.insets = new Insets(5, 5, 5, 5);
 		gc.fill = GridBagConstraints.HORIZONTAL;
 
 		JLabel title = new JLabel("FISH COUNTER", SwingConstants.CENTER);
+		title.setFont(new Font("SansSerif", Font.BOLD, 26));
+		title.setForeground(Theme.NAVY);
 		gc.gridx = 0;
 		gc.gridy = 0;
 		gc.gridwidth = 2;
-		panel.add(title, gc);
+		card.add(title, gc);
 
 		gc.gridwidth = 1;
 		gc.gridy = 1;
 		gc.gridx = 0;
-		panel.add(new JLabel("Username"), gc);
+		card.add(new JLabel("Username"), gc);
 		gc.gridx = 1;
-		panel.add(txuser, gc);
+		card.add(txuser, gc);
 
 		gc.gridy = 2;
 		gc.gridx = 0;
-		panel.add(new JLabel("Password"), gc);
+		card.add(new JLabel("Password"), gc);
 		gc.gridx = 1;
-		panel.add(pass, gc);
+		card.add(pass, gc);
 
+		bremember.setOpaque(false);
 		gc.gridy = 3;
 		gc.gridx = 0;
 		gc.gridwidth = 2;
-		panel.add(bremember, gc);
+		card.add(bremember, gc);
 
+		Theme.styleButton(blogin, 14);
+		Theme.styleButton(bcreate, 12);
 		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+		buttons.setOpaque(false);
 		buttons.add(blogin);
 		buttons.add(bcreate);
 		gc.gridy = 4;
-		panel.add(buttons, gc);
+		card.add(buttons, gc);
 
-		getContentPane().add(panel);
+		root.add(card);
+		getContentPane().add(root);
 		getRootPane().setDefaultButton(blogin); // pressing Enter clicks Login
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack();

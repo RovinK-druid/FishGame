@@ -1,6 +1,8 @@
 package com.perisic.fish.peripherals;
 
+import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -20,7 +22,6 @@ import javax.swing.SwingConstants;
  * Window where a new player creates an account.
  * It only handles display and button events; the checking and saving is done by UserStore
  * (through LoginData).
- * Written by me with help from Claude (AI assistant).
  */
 public class RegisterGUI extends JDialog {
 
@@ -35,36 +36,43 @@ public class RegisterGUI extends JDialog {
 	RegisterGUI(JFrame owner, LoginData ldata) {
 		super(owner, "Fish Counter - Create account", true); // true = blocks the login window
 
-		JPanel panel = new JPanel(new GridBagLayout());
-		panel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+		WaterPanel root = new WaterPanel();
+		root.setLayout(new GridBagLayout());
+		root.setPreferredSize(new Dimension(480, 460));
+
+		JPanel card = new JPanel(new GridBagLayout());
+		card.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Theme.NAVY, 3),
+				BorderFactory.createEmptyBorder(20, 30, 20, 30)));
 		GridBagConstraints gc = new GridBagConstraints();
 		gc.insets = new Insets(5, 5, 5, 5);
 		gc.fill = GridBagConstraints.HORIZONTAL;
 
 		JLabel title = new JLabel("NEW PLAYER", SwingConstants.CENTER);
+		title.setFont(new Font("SansSerif", Font.BOLD, 24));
+		title.setForeground(Theme.NAVY);
 		gc.gridx = 0;
 		gc.gridy = 0;
 		gc.gridwidth = 2;
-		panel.add(title, gc);
+		card.add(title, gc);
 
 		gc.gridwidth = 1;
 		gc.gridy = 1;
 		gc.gridx = 0;
-		panel.add(new JLabel("Username"), gc);
+		card.add(new JLabel("Username"), gc);
 		gc.gridx = 1;
-		panel.add(txuser, gc);
+		card.add(txuser, gc);
 
 		gc.gridy = 2;
 		gc.gridx = 0;
-		panel.add(new JLabel("Password"), gc);
+		card.add(new JLabel("Password"), gc);
 		gc.gridx = 1;
-		panel.add(pass, gc);
+		card.add(pass, gc);
 
 		gc.gridy = 3;
 		gc.gridx = 0;
-		panel.add(new JLabel("Repeat password"), gc);
+		card.add(new JLabel("Repeat password"), gc);
 		gc.gridx = 1;
-		panel.add(confirm, gc);
+		card.add(confirm, gc);
 
 		JLabel note = new JLabel("<html><small>Username: 3-20 letters, numbers or _.<br>"
 				+ "Password: at least 8 characters.<br>"
@@ -72,13 +80,18 @@ public class RegisterGUI extends JDialog {
 		gc.gridy = 4;
 		gc.gridx = 0;
 		gc.gridwidth = 2;
-		panel.add(note, gc);
+		card.add(note, gc);
 
+		Theme.styleButton(bregister, 14);
+		Theme.styleButton(bback, 12);
 		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+		buttons.setOpaque(false);
 		buttons.add(bregister);
 		buttons.add(bback);
 		gc.gridy = 5;
-		panel.add(buttons, gc);
+		card.add(buttons, gc);
+
+		root.add(card);
 
 		// EVENT: Register button
 		bregister.addActionListener(e -> {
@@ -97,7 +110,7 @@ public class RegisterGUI extends JDialog {
 
 		getRootPane().setDefaultButton(bregister); // pressing Enter clicks Register
 
-		getContentPane().add(panel);
+		getContentPane().add(root);
 		pack();
 		setLocationRelativeTo(owner);
 		setVisible(true); // blocks until the dialog is closed
