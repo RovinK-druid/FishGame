@@ -21,7 +21,7 @@ import com.perisic.fish.engine.ScoreStore;
 /**
  * Graphical User Interface for the Fish Game.
  * Based on the unit example by Marc Conrad.
- * 
+ * Layout, round timer, keyboard shortcuts, feedback, menu, high score table, log out and the underwater look
  * This class only handles DISPLAY and USER EVENTS. The rules are in GameEngine.
  */
 public class GameGUI extends JFrame implements ActionListener {
@@ -36,7 +36,7 @@ public class GameGUI extends JFrame implements ActionListener {
 	JLabel questArea = null;
 	JLabel headerLabel = null;
 	JLabel feedbackLabel = null;
-	JProgressBar timeBar = null;
+	TimeBar timeBar = null;
 	JButton[] buttons = new JButton[10];
 
 	Timer roundTimer = null; // javax.swing.Timer: fires an event every TICK_MS
@@ -110,7 +110,7 @@ public class GameGUI extends JFrame implements ActionListener {
 		timeLeftMs = myGame.getTimeLimitSeconds() * 1000;
 		timeBar.setMaximum(timeLeftMs);
 		timeBar.setValue(timeLeftMs);
-		timeBar.setForeground(new Color(0, 160, 0));
+		timeBar.setForeground(new Color(0, 170, 0));
 		roundTimer.start();
 	}
 
@@ -181,8 +181,9 @@ public class GameGUI extends JFrame implements ActionListener {
 			hearts.append("\u2665 "); // heart symbol
 		}
 		String who = (playerName == null) ? "Guest" : playerName;
-		headerLabel.setText(who + "   |   Level " + myGame.getLevel() + "   |   Score " + myGame.getScore()
-				+ "   |   Best " + myGame.getHighScore() + "   |   Lives " + hearts);
+		headerLabel.setText("<html>" + who + " &nbsp;|&nbsp; Level " + myGame.getLevel() + " &nbsp;|&nbsp; Score "
+				+ myGame.getScore() + " &nbsp;|&nbsp; Best " + myGame.getHighScore()
+				+ " &nbsp;|&nbsp; Lives <font color='#ff6b6b'>" + hearts + "</font></html>");
 	}
 
 	/**
@@ -216,39 +217,50 @@ public class GameGUI extends JFrame implements ActionListener {
 		// ----- top: header text and time bar -----
 		headerLabel = new JLabel("", SwingConstants.CENTER);
 		headerLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
+		headerLabel.setOpaque(true);
+		headerLabel.setBackground(Theme.NAVY);
+		headerLabel.setForeground(Color.WHITE);
+		headerLabel.setBorder(new EmptyBorder(6, 10, 6, 10));
 
-		timeBar = new JProgressBar(0, 100);
-		timeBar.setPreferredSize(new Dimension(700, 18));
+		timeBar = new TimeBar();
 
 		JPanel top = new JPanel(new BorderLayout(0, 6));
+		top.setOpaque(false);
 		top.add(headerLabel, BorderLayout.NORTH);
 		top.add(timeBar, BorderLayout.SOUTH);
 
 		// ----- centre: the fish image -----
 		questArea = new JLabel("", SwingConstants.CENTER);
 		JScrollPane questPane = new JScrollPane(questArea);
+		questPane.setBorder(BorderFactory.createLineBorder(Theme.NAVY, 4));
 
 		// ----- bottom: feedback text and answer buttons -----
 		feedbackLabel = new JLabel("Count the FISH only (not the treasure)!", SwingConstants.CENTER);
 		feedbackLabel.setFont(new Font("SansSerif", Font.BOLD, 15));
+		feedbackLabel.setOpaque(true);
+		feedbackLabel.setBackground(new Color(255, 255, 235));
+		feedbackLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Theme.NAVY, 2),
+				new EmptyBorder(4, 10, 4, 10)));
 
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 6));
+		buttonPanel.setOpaque(false);
 		for (int i = 0; i < 10; i++) {
 			JButton btn = new JButton(String.valueOf(i));
-			btn.setFont(new Font("SansSerif", Font.BOLD, 18));
+			Theme.styleButton(btn, 18);
 			btn.setPreferredSize(new Dimension(58, 44));
-			btn.setBackground(new Color(173, 216, 230));
 			btn.addActionListener(this);
 			buttons[i] = btn;
 			buttonPanel.add(btn);
 		}
 
-		JPanel bottom = new JPanel(new BorderLayout());
+		JPanel bottom = new JPanel(new BorderLayout(0, 4));
+		bottom.setOpaque(false);
 		bottom.add(feedbackLabel, BorderLayout.NORTH);
 		bottom.add(buttonPanel, BorderLayout.SOUTH);
 
-		// ----- put it all together -----
-		JPanel root = new JPanel(new BorderLayout(10, 10));
+		// ----- put it all together on the animated underwater background -----
+		WaterPanel root = new WaterPanel();
+		root.setLayout(new BorderLayout(10, 10));
 		root.setBorder(new EmptyBorder(10, 10, 10, 10));
 		root.add(top, BorderLayout.NORTH);
 		root.add(questPane, BorderLayout.CENTER);
