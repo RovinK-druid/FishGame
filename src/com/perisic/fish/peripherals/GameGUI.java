@@ -21,7 +21,7 @@ import com.perisic.fish.engine.ScoreStore;
 /**
  * Graphical User Interface for the Fish Game.
  * Based on the unit example by Marc Conrad.
- * Layout, round timer, keyboard shortcuts, feedback, menu, high score table, log out and the underwater look
+ * 
  * This class only handles DISPLAY and USER EVENTS. The rules are in GameEngine.
  */
 public class GameGUI extends JFrame implements ActionListener {
@@ -167,6 +167,13 @@ public class GameGUI extends JFrame implements ActionListener {
 		roundTimer.start();
 	}
 
+	/** Menu: Game > Adventure mode. Opens the map adventure and closes this window. */
+	private void openAdventure() {
+		roundTimer.stop();
+		new AdventureGUI(playerName).setVisible(true);
+		dispose();
+	}
+
 	/** Menu: Game > Log out. Forgets the "remember me" token and goes back to the login. */
 	private void logout() {
 		roundTimer.stop();
@@ -204,13 +211,16 @@ public class GameGUI extends JFrame implements ActionListener {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu gameMenu = new JMenu("Game");
 		JMenuItem scoresItem = new JMenuItem("High scores");
+		JMenuItem adventureItem = new JMenuItem("Adventure mode");
 		JMenuItem logoutItem = new JMenuItem("Log out");
+		gameMenu.add(adventureItem);
 		gameMenu.add(scoresItem);
 		gameMenu.add(logoutItem);
 		menuBar.add(gameMenu);
 		setJMenuBar(menuBar);
 
 		// EVENT 4: menu items
+		adventureItem.addActionListener(e -> openAdventure());
 		scoresItem.addActionListener(e -> viewHighScores());
 		logoutItem.addActionListener(e -> logout());
 
