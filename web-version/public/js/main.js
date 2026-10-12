@@ -1,5 +1,5 @@
 // main.js - starts the game: creates the renderer, scene and camera, then runs the game loop.
-// Written with help from Claude (AI assistant).
+
 
 import * as THREE from 'three';
 import { createWorld } from './world.js';
