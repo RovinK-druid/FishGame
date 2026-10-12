@@ -25,8 +25,6 @@ import javax.crypto.spec.PBEKeySpec;
  * 
  * File format (one account per line):  username:salt:hash   (salt and hash are Base64)
  * 
- * Written by me with help from Claude (AI assistant). This is the virtual identity
- * part of the game.
  */
 public class UserStore {
 
