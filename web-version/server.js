@@ -1,6 +1,6 @@
 // server.js - Fish Counter web server (Day 1)
 // Serves the game files to the browser. Later days add login, scores and the Fish API proxy here.
-// Written with help from Claude (AI assistant).
+
 
 import express from 'express';
 import path from 'node:path';
