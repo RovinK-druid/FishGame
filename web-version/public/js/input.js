@@ -1,7 +1,6 @@
 // input.js - keyboard input
 // The browser sends keydown / keyup EVENTS. This module listens for them and remembers which
 // keys are held down, so the game loop can ask "is this key down right now?" on every frame.
-// Written with help from Claude (AI assistant).
 
 const held = new Set();
 
