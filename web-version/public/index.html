@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fish Counter</title>
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Tells the browser where to find Three.js (served by server.js) -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/vendor/three/three.module.js",
+        "three/addons/": "/vendor/three-addons/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <h1>Fish Counter</h1>
+    <p><b>W / &uarr;</b> swim forward &nbsp; <b>S / &darr;</b> reverse</p>
+    <p><b>A / &larr;</b> turn left &nbsp; <b>D / &rarr;</b> turn right</p>
+    <p><b>Space</b> swim up &nbsp; <b>Shift</b> swim down</p>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
