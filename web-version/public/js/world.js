@@ -1,6 +1,6 @@
 // world.js - builds the underwater world: lights, seabed, random rocks, seaweed, bubbles, surface.
 // It only creates and animates scenery. It knows nothing about the player or the keyboard.
-// Written with help from Claude (AI assistant).
+
 
 import * as THREE from 'three';
 
