@@ -1,4 +1,4 @@
-// world.js - builds the underwater world: lights, seabed, rocks, seaweed, bubbles, surface.
+// world.js - builds the underwater world: lights, seabed, random rocks, seaweed, bubbles, surface.
 // It only creates and animates scenery. It knows nothing about the player or the keyboard.
 // Written with help from Claude (AI assistant).
 
@@ -12,8 +12,8 @@ export function seabedHeight(x, z) {
   return Math.sin(x * 0.12) * Math.cos(z * 0.1) * 1.2 + Math.sin(x * 0.31 + z * 0.27) * 0.4;
 }
 
-// A small random number generator with a fixed seed, so the reef looks the same every time.
-function seededRandom(seed) {
+/** A small random number generator with a fixed seed, so the reef looks the same every time. */
+export function seededRandom(seed) {
   return function () {
     seed |= 0;
     seed = (seed + 0x6d2b79f5) | 0;
@@ -53,17 +53,23 @@ function addSurface(scene) {
   scene.add(surface);
 }
 
-function addRocks(scene, rand) {
+/** Random rocks on the seabed. `keepClear` lists places that must stay free of rocks. */
+function addRocks(scene, rand, keepClear, colliders) {
   const material = new THREE.MeshStandardMaterial({ color: 0x6f7480, flatShading: true, roughness: 1 });
-  for (let i = 0; i < 45; i++) {
+  for (let i = 0; i < 60; i++) {
     const radius = 1 + rand() * 3;
-    const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(radius, 0), material);
     const x = (rand() - 0.5) * WORLD_SIZE;
     const z = (rand() - 0.5) * WORLD_SIZE;
+    const tooClose = keepClear.some((k) => Math.hypot(x - k.x, z - k.z) < k.r + radius);
+    if (tooClose) {
+      continue;
+    }
+    const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(radius, 0), material);
     rock.position.set(x, seabedHeight(x, z) + radius * 0.4, z);
     rock.rotation.set(rand() * 3, rand() * 3, rand() * 3);
     rock.scale.y = 0.6 + rand() * 0.5;
     scene.add(rock);
+    colliders.push({ type: 'sphere', x, y: rock.position.y, z, r: radius * 0.85 });
   }
 }
 
@@ -103,19 +109,22 @@ function addBubbles(scene, rand) {
 }
 
 /**
- * Builds the whole world and returns an object with update(time, dt),
- * which the game loop calls every frame to animate the seaweed and bubbles.
+ * Builds the whole world. Returns
+ *   colliders: the random rocks, for the physics module
+ *   update(time, dt): called every frame to animate the seaweed and bubbles
  */
-export function createWorld(scene) {
+export function createWorld(scene, keepClear = []) {
   const rand = seededRandom(42);
+  const colliders = [];
   addLights(scene);
   addSeabed(scene);
   addSurface(scene);
-  addRocks(scene, rand);
+  addRocks(scene, rand, keepClear, colliders);
   const weeds = addSeaweed(scene, rand);
   const bubbles = addBubbles(scene, rand);
 
   return {
+    colliders,
     update(time, dt) {
       // seaweed sways
       for (const weed of weeds) {
