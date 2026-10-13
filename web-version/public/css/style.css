@@ -1,4 +1,4 @@
-/* style.css - page layout and the on-screen help box */
+/* style.css - page layout, the help box, the status bar and the messages */
 
 html, body {
   margin: 0;
@@ -35,4 +35,87 @@ html, body {
 
 #hud p {
   margin: 2px 0;
+}
+
+#status {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  padding: 8px 16px;
+  border: 2px solid #ffffff;
+  border-radius: 10px;
+  background: rgba(0, 60, 110, 0.8);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: bold;
+  user-select: none;
+}
+
+#message {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 80%;
+  padding: 10px 20px;
+  border: 2px solid #0b3a5c;
+  border-radius: 10px;
+  background: #fffbe8;
+  color: #0b3a5c;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  display: none;
+}
+
+#message.visible {
+  display: block;
+}
+
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 30, 60, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#overlay.visible {
+  display: flex;
+}
+
+#overlay .box {
+  padding: 28px 44px;
+  border: 3px solid #ffffff;
+  border-radius: 14px;
+  background: #0b3a5c;
+  color: #ffffff;
+  text-align: center;
+}
+
+#overlay h2 {
+  margin: 0 0 10px;
+  font-size: 30px;
+  color: #ffd34d;
+}
+
+#overlay p {
+  margin: 0 0 18px;
+  font-size: 18px;
+}
+
+#restart {
+  padding: 10px 26px;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  background: #add8e6;
+  color: #0b3a5c;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#restart:hover {
+  background: #78bee1;
 }
