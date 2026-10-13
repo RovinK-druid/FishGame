@@ -10,6 +10,8 @@ const TURN_SPEED = 1.8; // radians per second
 const LIFT_SPEED = 5;   // units per second
 const LIMIT = WORLD_SIZE / 2 - 2; // the fish cannot leave the world
 
+export const PLAYER_RADIUS = 1.1; // size used for collisions
+
 /** Builds a low-poly fish. The nose points along +Z. */
 function buildFish() {
   const fish = new THREE.Group();
@@ -53,20 +55,25 @@ function buildFish() {
 }
 
 export class Player {
-  constructor(scene) {
+  constructor(scene, start) {
     this.group = buildFish();
     this.group.rotation.order = 'YXZ'; // turn first, then tilt up/down, then roll
-    this.group.position.set(0, 6, 0);
     scene.add(this.group);
-
-    this.yaw = 0;    // direction the fish is facing (radians)
-    this.speed = 0;  // forward speed
-    this.climb = 0;  // vertical speed
     this.time = 0;
+    this.reset(start);
   }
 
   get position() {
     return this.group.position;
+  }
+
+  /** Puts the fish back at the start, facing +Z, not moving. */
+  reset(start) {
+    this.group.position.set(start.x, start.y, start.z);
+    this.yaw = 0;    // direction the fish is facing (radians)
+    this.speed = 0;  // forward speed
+    this.climb = 0;  // vertical speed
+    this.group.rotation.set(0, 0, 0);
   }
 
   /** Reads the keys and moves the fish. Called once per frame; dt = seconds since last frame. */
@@ -108,13 +115,23 @@ export class Player {
       Math.sin(this.time * (5 + Math.abs(this.speed))) * 0.45;
   }
 
-  /** Moves the camera smoothly to a spot behind and above the fish, looking at it. */
-  updateCamera(camera, dt) {
+  /** Where the camera wants to be: behind and above the fish. */
+  cameraTarget() {
     const behind = new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw)).multiplyScalar(10);
     const wanted = this.group.position.clone().add(behind).add(new THREE.Vector3(0, 3.5, 0));
     wanted.y = Math.max(wanted.y, seabedHeight(wanted.x, wanted.z) + 1);
+    return wanted;
+  }
 
-    camera.position.lerp(wanted, 1 - Math.exp(-4 * dt));
+  /** Moves the camera smoothly towards its spot, looking at the fish. */
+  updateCamera(camera, dt) {
+    camera.position.lerp(this.cameraTarget(), 1 - Math.exp(-4 * dt));
+    camera.lookAt(this.group.position.x, this.group.position.y + 0.5, this.group.position.z);
+  }
+
+  /** Puts the camera straight into place (used after a restart). */
+  snapCamera(camera) {
+    camera.position.copy(this.cameraTarget());
     camera.lookAt(this.group.position.x, this.group.position.y + 0.5, this.group.position.z);
   }
 }
