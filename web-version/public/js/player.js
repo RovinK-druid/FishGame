@@ -1,5 +1,5 @@
 // player.js - the player's fish: its 3D model, swimming controls and the chase camera.
-.
+// Written with help from Claude (AI assistant).
 
 import * as THREE from 'three';
 import { isDown } from './input.js';
