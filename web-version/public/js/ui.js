@@ -14,8 +14,9 @@ function formatTime(seconds) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-export function setStatus(gatesOpened, gatesTotal, seconds) {
-  statusEl.textContent = `Gates ${gatesOpened}/${gatesTotal}   |   Time ${formatTime(seconds)}`;
+export function setStatus(gatesOpened, gatesTotal, mistakes, seconds) {
+  statusEl.textContent =
+    `Gates ${gatesOpened}/${gatesTotal}   |   Mistakes ${mistakes}   |   Time ${formatTime(seconds)}`;
 }
 
 export function showMessage(text) {
@@ -28,8 +29,9 @@ export function hideMessage() {
 }
 
 /** Shows the "Treasure found" box. onRestart is called when the button is clicked. */
-export function showComplete(seconds, onRestart) {
-  overlayText.textContent = `You reached the treasure in ${formatTime(seconds)}.`;
+export function showComplete(seconds, mistakes, onRestart) {
+  const plural = mistakes === 1 ? 'mistake' : 'mistakes';
+  overlayText.textContent = `You reached the treasure in ${formatTime(seconds)} with ${mistakes} ${plural}.`;
   overlayEl.classList.add('visible');
   restartButton.onclick = () => { // EVENT: Play again button
     restartButton.blur();

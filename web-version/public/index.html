@@ -24,13 +24,25 @@
     <p><b>W / &uarr;</b> swim forward &nbsp; <b>S / &darr;</b> reverse</p>
     <p><b>A / &larr;</b> turn left &nbsp; <b>D / &rarr;</b> turn right</p>
     <p><b>Space</b> swim up &nbsp; <b>Shift</b> swim down</p>
-    <p><b>E</b> open a gate</p>
+    <p><b>E</b> count fish to open a gate</p>
   </div>
 
   <div id="status"></div>
   <div id="message"></div>
 
-  <div id="overlay">
+  <!-- the fish-counting puzzle at a gate -->
+  <div id="puzzle" class="overlay">
+    <div class="box">
+      <h2>Checkpoint: count the fish!</h2>
+      <div class="picture"><img id="puzzle-image" alt="A picture of fish and treasure chests"></div>
+      <p id="puzzle-feedback"></p>
+      <div id="puzzle-buttons"></div>
+      <button id="puzzle-cancel" class="secondary">Cancel (Esc)</button>
+    </div>
+  </div>
+
+  <!-- shown when the treasure is reached -->
+  <div id="overlay" class="overlay">
     <div class="box">
       <h2>Treasure found!</h2>
       <p id="overlay-text"></p>
