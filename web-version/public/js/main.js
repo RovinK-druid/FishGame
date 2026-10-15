@@ -8,6 +8,7 @@ import { createLevel1, KEEP_CLEAR, START } from './level1.js';
 import { Player, PLAYER_RADIUS } from './player.js';
 import { resolveCollisions } from './physics.js';
 import { consumePress, endFrame } from './input.js';
+import { askPuzzle } from './puzzle.js';
 import * as ui from './ui.js';
 
 const WATER_COLOUR = 0x1a6fa8;
@@ -40,16 +41,30 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-let state = 'playing'; // 'playing' or 'complete'
-let elapsed = 0;       // seconds spent in this attempt
+let state = 'playing'; // 'playing', 'puzzle' (a gate puzzle is open) or 'complete'
+let elapsed = 0;       // seconds spent swimming in this attempt (paused during puzzles)
+let mistakes = 0;      // wrong puzzle answers in this attempt
 
 function restart() {
   player.reset(START);
   player.snapCamera(camera);
   level.reset();
   elapsed = 0;
+  mistakes = 0;
   state = 'playing';
   ui.hideComplete();
+}
+
+/** The player pressed E at a closed gate: show the Fish puzzle and open the gate if it is solved. */
+async function solveGate(gate) {
+  state = 'puzzle'; // the fish and the timer pause while the puzzle is open
+  ui.hideMessage();
+  const result = await askPuzzle(); // browser -> our server -> Fish Game API
+  mistakes += result.mistakes;
+  if (result.solved) {
+    gate.open();
+  }
+  state = 'playing';
 }
 
 /** Game rules for one frame while the player is swimming. */
@@ -61,23 +76,23 @@ function playFrame(dt) {
   // is the fish at a closed gate?
   const gate = level.gates.find((g) => !g.opened && g.isNear(player.position));
   if (gate) {
-    ui.showMessage('Gate locked! Press E to open it (test mode - the fish-counting puzzle comes next).');
+    ui.showMessage('Gate locked! Press E and count the fish to open it.');
     if (consumePress('KeyE')) { // EVENT: E key
-      gate.open();
+      solveGate(gate);
     }
   } else {
     ui.hideMessage();
   }
 
   // reached the treasure?
-  if (level.chest.isNear(player.position)) {
+  if (state === 'playing' && level.chest.isNear(player.position)) {
     state = 'complete';
     ui.hideMessage();
-    ui.showComplete(elapsed, restart);
+    ui.showComplete(elapsed, mistakes, restart);
   }
 
   const opened = level.gates.filter((g) => g.opened).length;
-  ui.setStatus(opened, level.gates.length, elapsed);
+  ui.setStatus(opened, level.gates.length, mistakes, elapsed);
 }
 
 // The game loop: runs about 60 times a second
