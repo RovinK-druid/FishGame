@@ -2,9 +2,8 @@
 //
 // The browser is only ever given the PICTURE and a random puzzle id. The correct answer stays
 // here on the server, so a player cannot cheat by looking at the network traffic.
-// Puzzles are kept in memory and expire after a few minutes.
-//
-// Written with help from Claude (AI assistant).
+// Each puzzle belongs to the player who asked for it, and it expires after a few minutes.
+
 
 import { randomUUID } from 'node:crypto';
 
@@ -15,23 +14,26 @@ export class PuzzleStore {
     this.puzzles = new Map();
   }
 
-  /** Saves a puzzle's answer and returns a new random id for it. */
-  create(solution) {
+  /** Saves a puzzle's answer for `owner` and returns a new random id for it. */
+  create(solution, owner) {
     this.removeExpired();
     const id = randomUUID();
-    this.puzzles.set(id, { solution, expires: Date.now() + LIFETIME_MS });
+    this.puzzles.set(id, { solution, owner, expires: Date.now() + LIFETIME_MS });
     return id;
   }
 
   /**
-   * Checks a guess.
-   * @returns {{found: boolean, correct: boolean}} found is false if the id is unknown or expired.
-   *          A correct answer uses the puzzle up; a wrong answer lets the player try again.
+   * Checks a guess made by `owner`.
+   * @returns {{found: boolean, correct: boolean}} found is false if the id is unknown, expired
+   *          or belongs to someone else. A correct answer uses the puzzle up; a wrong answer
+   *          lets the player try again.
    */
-  check(id, guess) {
+  check(id, guess, owner) {
     const puzzle = this.puzzles.get(id);
-    if (!puzzle || puzzle.expires < Date.now()) {
-      this.puzzles.delete(id);
+    if (!puzzle || puzzle.owner !== owner || puzzle.expires < Date.now()) {
+      if (puzzle && puzzle.expires < Date.now()) {
+        this.puzzles.delete(id);
+      }
       return { found: false, correct: false };
     }
     const correct = guess === puzzle.solution;
