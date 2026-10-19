@@ -19,6 +19,7 @@
 <body>
   <canvas id="game"></canvas>
 
+  <!-- shown only while playing -->
   <div id="hud">
     <h1>Fish Counter</h1>
     <p><b>W / &uarr;</b> swim forward &nbsp; <b>S / &darr;</b> reverse</p>
@@ -26,7 +27,6 @@
     <p><b>Space</b> swim up &nbsp; <b>Shift</b> swim down</p>
     <p><b>E</b> count fish to open a gate</p>
   </div>
-
   <div id="status"></div>
   <div id="message"></div>
 
@@ -46,7 +46,85 @@
     <div class="box">
       <h2>Treasure found!</h2>
       <p id="overlay-text"></p>
-      <button id="restart">Play again</button>
+      <p id="overlay-score" class="score"></p>
+      <div class="buttons">
+        <button id="restart">Play again</button>
+        <button id="complete-scores">High scores</button>
+        <button id="complete-menu">Main menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- menu screens (drawn on top of the 3D reef) -->
+  <div id="screen-login" class="screen">
+    <form id="login-form" class="card">
+      <h1>FISH COUNTER</h1>
+      <p class="sub">Log in to dive in</p>
+      <label>Username
+        <input id="login-username" type="text" autocomplete="username" maxlength="20" required>
+      </label>
+      <label>Password
+        <input id="login-password" type="password" autocomplete="current-password" maxlength="100" required>
+      </label>
+      <label class="check"><input id="login-remember" type="checkbox"> Remember me on this computer</label>
+      <p id="login-message" class="message"></p>
+      <button type="submit">Log in</button>
+      <button type="button" id="go-register" class="link">Create account</button>
+    </form>
+  </div>
+
+  <div id="screen-register" class="screen">
+    <form id="register-form" class="card">
+      <h1>NEW PLAYER</h1>
+      <label>Username
+        <input id="register-username" type="text" autocomplete="username" maxlength="20" placeholder="3-20 letters or numbers" required>
+      </label>
+      <label>Password
+        <input id="register-password" type="password" autocomplete="new-password" maxlength="100" placeholder="at least 8 characters" required>
+      </label>
+      <label>Repeat password
+        <input id="register-confirm" type="password" autocomplete="new-password" maxlength="100" required>
+      </label>
+      <p class="note">Only a salted hash of your password is saved, never the password itself.</p>
+      <p id="register-message" class="message"></p>
+      <button type="submit">Register</button>
+      <button type="button" id="go-login" class="link">Back to login</button>
+    </form>
+  </div>
+
+  <div id="screen-menu" class="screen">
+    <div class="card menu">
+      <h1>FISH COUNTER</h1>
+      <p class="sub">3D reef adventure</p>
+      <p id="menu-user" class="chip"></p>
+      <button id="menu-play">Play</button>
+      <button id="menu-scores">High scores</button>
+      <button id="menu-help">How to play</button>
+      <button id="menu-logout" class="link">Log out</button>
+    </div>
+  </div>
+
+  <div id="screen-scores" class="screen">
+    <div class="card wide">
+      <h1>High scores</h1>
+      <table>
+        <thead><tr><th>Rank</th><th>Player</th><th>Score</th><th>Time</th></tr></thead>
+        <tbody id="scores-body"></tbody>
+      </table>
+      <p id="scores-note" class="note"></p>
+      <button id="scores-back">Back</button>
+    </div>
+  </div>
+
+  <div id="screen-help" class="screen">
+    <div class="card wide">
+      <h1>How to play</h1>
+      <p class="text">Swim through the two glowing gates to reach the treasure chest. Rock walls and closed gates block the way.</p>
+      <p class="text">At a gate press <b>E</b> and count the <b>fish</b> in the picture (ignore the treasure chests). Pick the right number to open the gate.</p>
+      <p class="text"><b>W / S</b> or <b>&uarr; / &darr;</b> swim forward / back &nbsp; <b>A / D</b> or <b>&larr; / &rarr;</b> turn<br>
+        <b>Space</b> swim up &nbsp; <b>Shift</b> swim down</p>
+      <p class="text">Your score is based on your time and your mistakes.</p>
+      <button id="help-back">Back</button>
     </div>
   </div>
 

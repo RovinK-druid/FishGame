@@ -1,4 +1,4 @@
-/* style.css - page layout, the help box, the status bar, messages and the pop-up windows */
+/* style.css - page layout, the HUD, pop-up windows and the menu screens */
 
 html, body {
   margin: 0;
@@ -14,18 +14,28 @@ html, body {
   height: 100%;
 }
 
-#hud {
+/* ---- heads-up display: only while playing ---- */
+
+#hud, #status {
+  display: none;
   position: fixed;
   top: 14px;
-  left: 14px;
-  padding: 10px 16px;
   border: 2px solid #ffffff;
   border-radius: 10px;
   background: rgba(0, 60, 110, 0.8);
   color: #ffffff;
+  user-select: none;
+}
+
+body.in-game #hud, body.in-game #status {
+  display: block;
+}
+
+#hud {
+  left: 14px;
+  padding: 10px 16px;
   font-size: 14px;
   line-height: 1.4;
-  user-select: none;
 }
 
 #hud h1 {
@@ -38,17 +48,10 @@ html, body {
 }
 
 #status {
-  position: fixed;
-  top: 14px;
   right: 14px;
   padding: 8px 16px;
-  border: 2px solid #ffffff;
-  border-radius: 10px;
-  background: rgba(0, 60, 110, 0.8);
-  color: #ffffff;
   font-size: 16px;
   font-weight: bold;
-  user-select: none;
 }
 
 #message {
@@ -68,11 +71,12 @@ html, body {
   display: none;
 }
 
-#message.visible {
+body.in-game #message.visible {
   display: block;
 }
 
-/* pop-up windows (the puzzle and the treasure box) */
+/* ---- pop-up windows (the puzzle and the treasure box) ---- */
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -109,7 +113,22 @@ html, body {
   font-size: 18px;
 }
 
-.overlay button {
+.overlay p.score {
+  font-weight: bold;
+  color: #ffd34d;
+}
+
+.overlay .buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* ---- buttons (shared by the pop-ups and the menu screens) ---- */
+
+.overlay button, .screen button {
   padding: 10px 22px;
   border: 2px solid #ffffff;
   border-radius: 8px;
@@ -120,7 +139,7 @@ html, body {
   cursor: pointer;
 }
 
-.overlay button:hover:not(:disabled) {
+.overlay button:hover:not(:disabled), .screen button:hover:not(:disabled) {
   background: #78bee1;
 }
 
@@ -137,7 +156,7 @@ html, body {
   color: #ffffff;
 }
 
-/* the fish picture */
+/* the fish picture in the puzzle */
 .picture {
   min-height: 120px;
 }
@@ -168,4 +187,144 @@ html, body {
   width: 54px;
   height: 46px;
   padding: 0;
+}
+
+/* ---- menu screens: they sit on top of the live 3D reef ---- */
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 40, 70, 0.35);
+  z-index: 10; /* above the pop-up windows */
+}
+
+.screen.visible {
+  display: flex;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 360px;
+  max-width: 92vw;
+  max-height: 94vh;
+  overflow: auto;
+  padding: 24px 30px;
+  border: 3px solid #ffffff;
+  border-radius: 14px;
+  background: #0b3a5c;
+  color: #ffffff;
+}
+
+.card.wide {
+  width: 520px;
+}
+
+.card h1 {
+  margin: 0;
+  font-size: 30px;
+  text-align: center;
+  color: #ffd34d;
+}
+
+.card .sub {
+  margin: 0 0 6px;
+  text-align: center;
+  font-style: italic;
+  color: #cfe8f7;
+}
+
+.card label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.card label.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: normal;
+}
+
+.card input[type="text"], .card input[type="password"] {
+  padding: 9px 10px;
+  border: 2px solid #add8e6;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.card .message {
+  min-height: 20px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+  color: #ff8a8a;
+}
+
+.card .message.good {
+  color: #9be89b;
+}
+
+.card .note {
+  margin: 0;
+  font-size: 13px;
+  font-style: italic;
+  color: #cfe8f7;
+}
+
+.card .text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.card .chip {
+  align-self: center;
+  margin: 0 0 6px;
+  padding: 4px 14px;
+  border: 2px solid #ffffff;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.card .chip:empty {
+  display: none;
+}
+
+.screen button.link {
+  background: transparent;
+  color: #ffffff;
+  border-color: transparent;
+  font-size: 15px;
+  text-decoration: underline;
+}
+
+.card table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.card th, .card td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid #1d5a85;
+}
+
+.card th {
+  background: #1d5a85;
+}
+
+.card tr.me td {
+  background: #3f7d3f;
+  font-weight: bold;
 }
