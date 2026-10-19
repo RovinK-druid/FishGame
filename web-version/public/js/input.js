@@ -3,7 +3,7 @@
 //  - which keys are held down (isDown), and
 //  - which keys were just pressed this frame (consumePress), e.g. for "press E to open".
 // The game loop asks about the keys on every frame.
-// Written with help from Claude (AI assistant).
+
 
 const held = new Set();
 const justPressed = new Set();
@@ -14,7 +14,16 @@ const GAME_KEYS = [
   'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE', 'Space', 'ShiftLeft', 'ShiftRight',
 ];
 
+/** True when the player is typing in a text box (login form etc.). */
+function typingInField(event) {
+  const tag = event.target && event.target.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+}
+
 window.addEventListener('keydown', (event) => {
+  if (typingInField(event)) {
+    return; // let the letters go into the text box
+  }
   if (GAME_KEYS.includes(event.code)) {
     event.preventDefault();
   }

@@ -1,8 +1,8 @@
 // puzzle.js - the checkpoint puzzle window: a fish picture and the buttons 0-9.
 // askPuzzle() opens it and returns a Promise that finishes with { solved, mistakes }.
-// Written with help from Claude (AI assistant).
 
-import { requestPuzzle, submitAnswer } from './fishClient.js';
+
+import { requestPuzzle, submitAnswer } from './api.js';
 
 const overlay = document.getElementById('puzzle');
 const image = document.getElementById('puzzle-image');
@@ -122,4 +122,9 @@ export function askPuzzle() {
         showFeedback(`${error.message} Press Esc to close.`, 'bad');
       });
   });
+}
+
+/** Closes the puzzle window without an answer (used when the session ends). */
+export function closePuzzle() {
+  finish(false);
 }
