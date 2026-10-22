@@ -1,15 +1,20 @@
-// ui.js - the text on top of the 3D scene while playing (status, hints, level complete box).
+// ui.js - the text on top of the 3D scene while playing (status, hints, result boxes).
 // It only changes the web page; it contains no game rules.
 
 
 const statusEl = document.getElementById('status');
 const messageEl = document.getElementById('message');
+const flashEl = document.getElementById('damage-flash');
 const overlayEl = document.getElementById('overlay');
 const overlayText = document.getElementById('overlay-text');
 const overlayScore = document.getElementById('overlay-score');
 const restartButton = document.getElementById('restart');
 const scoresButton = document.getElementById('complete-scores');
 const menuButton = document.getElementById('complete-menu');
+const deadEl = document.getElementById('dead');
+const deadText = document.getElementById('dead-text');
+const deadRetry = document.getElementById('dead-retry');
+const deadMenu = document.getElementById('dead-menu');
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
@@ -17,9 +22,10 @@ function formatTime(seconds) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-export function setStatus(gatesOpened, gatesTotal, mistakes, seconds) {
+export function setStatus(lives, gatesOpened, gatesTotal, mistakes, seconds) {
+  const hearts = lives > 0 ? '\u2665 '.repeat(lives).trim() : '-';
   statusEl.textContent =
-    `Gates ${gatesOpened}/${gatesTotal}   |   Mistakes ${mistakes}   |   Time ${formatTime(seconds)}`;
+    `Lives ${hearts}   |   Gates ${gatesOpened}/${gatesTotal}   |   Mistakes ${mistakes}   |   Time ${formatTime(seconds)}`;
 }
 
 export function showMessage(text) {
@@ -29,6 +35,13 @@ export function showMessage(text) {
 
 export function hideMessage() {
   messageEl.classList.remove('visible');
+}
+
+/** A quick red flash around the screen when the player is hurt. */
+export function flashDamage() {
+  flashEl.classList.remove('active');
+  void flashEl.offsetWidth; // makes the browser restart the animation
+  flashEl.classList.add('active');
 }
 
 /**
@@ -53,4 +66,17 @@ export function setScoreResult(text) {
 
 export function hideComplete() {
   overlayEl.classList.remove('visible');
+}
+
+/** Shows the "game over" box when all lives are lost. handlers: { onRetry, onMenu }. */
+export function showDead(text, handlers) {
+  deadText.textContent = text;
+  deadEl.classList.add('visible');
+  // EVENT: the two buttons of the box
+  deadRetry.onclick = () => { deadRetry.blur(); handlers.onRetry(); };
+  deadMenu.onclick = () => { deadMenu.blur(); handlers.onMenu(); };
+}
+
+export function hideDead() {
+  deadEl.classList.remove('visible');
 }

@@ -54,6 +54,25 @@ body.in-game #hud, body.in-game #status {
   font-weight: bold;
 }
 
+/* red flash around the screen when the player is hurt */
+#damage-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 5;
+  background: radial-gradient(circle, rgba(255, 0, 0, 0) 35%, rgba(255, 0, 0, 0.75) 100%);
+}
+
+#damage-flash.active {
+  animation: damage-flash 0.6s ease-out;
+}
+
+@keyframes damage-flash {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 #message {
   position: fixed;
   bottom: 40px;
@@ -116,6 +135,10 @@ body.in-game #message.visible {
 .overlay p.score {
   font-weight: bold;
   color: #ffd34d;
+}
+
+#dead h2 {
+  color: #ff8a8a;
 }
 
 .overlay .buttons {

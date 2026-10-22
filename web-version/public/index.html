@@ -26,9 +26,11 @@
     <p><b>A / &larr;</b> turn left &nbsp; <b>D / &rarr;</b> turn right</p>
     <p><b>Space</b> swim up &nbsp; <b>Shift</b> swim down</p>
     <p><b>E</b> count fish to open a gate</p>
+    <p>Avoid the <b>mines</b> and the <b>predators</b>!</p>
   </div>
   <div id="status"></div>
   <div id="message"></div>
+  <div id="damage-flash"></div>
 
   <!-- the fish-counting puzzle at a gate -->
   <div id="puzzle" class="overlay">
@@ -51,6 +53,18 @@
         <button id="restart">Play again</button>
         <button id="complete-scores">High scores</button>
         <button id="complete-menu">Main menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- shown when all lives are lost -->
+  <div id="dead" class="overlay">
+    <div class="box">
+      <h2>You didn't make it!</h2>
+      <p id="dead-text"></p>
+      <div class="buttons">
+        <button id="dead-retry">Try again</button>
+        <button id="dead-menu">Main menu</button>
       </div>
     </div>
   </div>
@@ -123,6 +137,7 @@
       <p class="text">At a gate press <b>E</b> and count the <b>fish</b> in the picture (ignore the treasure chests). Pick the right number to open the gate.</p>
       <p class="text"><b>W / S</b> or <b>&uarr; / &darr;</b> swim forward / back &nbsp; <b>A / D</b> or <b>&larr; / &rarr;</b> turn<br>
         <b>Space</b> swim up &nbsp; <b>Shift</b> swim down</p>
+      <p class="text">Beware of the floating <b>mines</b> and the <b>predator fish</b>: each hit costs one of your three lives. Predators chase you but are slower than you, and they cannot swim through rocks or closed gates.</p>
       <p class="text">Your score is based on your time and your mistakes.</p>
       <button id="help-back">Back</button>
     </div>
