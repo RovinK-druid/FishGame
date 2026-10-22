@@ -1,5 +1,5 @@
 // player.js - the player's fish: its 3D model, swimming controls and the chase camera.
-// Written with help from Claude (AI assistant).
+
 
 import * as THREE from 'three';
 import { isDown } from './input.js';
@@ -113,6 +113,20 @@ export class Player {
     this.group.rotation.z = THREE.MathUtils.lerp(this.group.rotation.z, -turn * 0.35, Math.min(1, 5 * dt));
     this.group.userData.tailPivot.rotation.y =
       Math.sin(this.time * (5 + Math.abs(this.speed))) * 0.45;
+  }
+
+  /** Pushes the fish away from a point (after an explosion or a bite) and stops it. */
+  knockback(fromX, fromY, fromZ, distance) {
+    const p = this.group.position;
+    const dx = p.x - fromX;
+    const dy = p.y - fromY;
+    const dz = p.z - fromZ;
+    const length = Math.hypot(dx, dy, dz) || 1;
+    p.x += (dx / length) * distance;
+    p.y += (dy / length) * distance * 0.5;
+    p.z += (dz / length) * distance;
+    this.speed = 0;
+    this.climb = 0;
   }
 
   /** Where the camera wants to be: behind and above the fish. */
