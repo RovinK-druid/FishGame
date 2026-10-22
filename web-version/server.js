@@ -12,7 +12,6 @@
 //      GET  /api/scores             -> the high score table
 //    Everything except register, login, logout and the static files needs a logged-in player.
 
-
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -168,7 +167,7 @@ app.post('/api/puzzle/:id/answer', requireLogin, (req, res) => {
 app.post('/api/scores', requireLogin, (req, res) => {
   const { seconds, mistakes } = req.body ?? {};
   // never trust the browser: check that the numbers are sensible
-  if (!Number.isFinite(seconds) || seconds < 15 || seconds > 3600
+  if (!Number.isFinite(seconds) || seconds < 8 || seconds > 3600
       || !Number.isInteger(mistakes) || mistakes < 0 || mistakes > 100) {
     return res.status(400).json({ error: 'That result does not look valid.' });
   }
