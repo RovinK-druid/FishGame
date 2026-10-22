@@ -1,14 +1,15 @@
 // level1.js - the first level: two rock walls with a gap each. A gate closes each gap.
-// Swim through both gates to reach the treasure chest.
+// Swim through both gates to reach the treasure chest. Sea mines float in all three areas and
+// predator fish patrol the two areas behind the walls.
 //
 //   start (z = -66)  ->  wall 1 + gate 1 (z = -35)  ->  wall 2 + gate 2 (z = 10)  ->  chest (z = 58)
-//
-// Written with help from Claude (AI assistant).
 
 import * as THREE from 'three';
 import { seabedHeight, WORLD_SIZE, seededRandom } from './world.js';
 import { Gate, GAP_HALF } from './gate.js';
 import { Chest } from './chest.js';
+import { Mine } from './mine.js';
+import { Predator } from './predator.js';
 
 export const START = { x: 0, y: 6, z: -66 };
 
@@ -17,6 +18,23 @@ const WALLS = [
   { z: 10, gapX: 20 },
 ];
 const CHEST = { x: 0, z: 58 };
+
+// Sea mines: [x, height, z]. They are kept away from the start, the gates and the chest.
+const MINES = [
+  // area 1: from the start to wall 1
+  [-8, 6, -57], [9, 9, -52], [-2, 8, -44], [14, 5, -64],
+  // area 2: between the two walls
+  [-30, 7, -18], [0, 9, -12], [28, 6, -20], [-10, 12, -4],
+  // area 3: from wall 2 to the chest
+  [-10, 7, 25], [12, 10, 32], [0, 6, 44], [-20, 9, 52], [30, 8, 24],
+];
+
+// Predators: where they start and the area they wander in (they chase anywhere they can reach).
+const PREDATORS = [
+  { x: 10, y: 10, z: -12, zone: { minX: -72, maxX: 72, minZ: -31, maxZ: 6 } },   // area 2
+  { x: -25, y: 12, z: 38, zone: { minX: -72, maxX: 72, minZ: 14, maxZ: 72 } },   // area 3
+  { x: 35, y: 9, z: 52, zone: { minX: -72, maxX: 72, minZ: 14, maxZ: 72 } },     // area 3
+];
 
 /** Places where the world should keep random rocks away, so the route stays clear. */
 export const KEEP_CLEAR = [
@@ -70,18 +88,26 @@ export function createLevel1(scene) {
   }
 
   const chest = new Chest(scene, CHEST.x, seabedHeight(CHEST.x, CHEST.z) + 0.2, CHEST.z);
+  const mines = MINES.map(([x, y, z]) => new Mine(scene, x, y, z));
+  const predators = PREDATORS.map((spawn, i) => new Predator(scene, spawn, i + 1));
 
   return {
     gates,
     chest,
+    mines,
+    predators,
     colliders,
-    update(time) {
+    /** time = seconds since the game loaded, dt = seconds since the last frame */
+    update(time, dt) {
       gates.forEach((gate) => gate.update(time));
       chest.update(time);
+      mines.forEach((mine) => mine.update(time, dt));
     },
-    /** Closes every gate again. */
+    /** Closes every gate and puts every mine and predator back. */
     reset() {
       gates.forEach((gate) => gate.reset());
+      mines.forEach((mine) => mine.reset());
+      predators.forEach((predator) => predator.reset());
     },
   };
 }
