@@ -21,6 +21,13 @@ Swim from the start through two glowing gates to the treasure chest. Rock walls 
 block the way. To open a gate, count the fish in a picture (ignore the treasure chests).
 Your score depends on your time and your mistakes; the best score of each player is saved.
 
+## Dangers
+- Sea mines float in every area. Touching one makes it explode.
+- Predator fish patrol behind the walls. They chase you when you come close; they are slower than you
+  and cannot swim through rocks or closed gates.
+- You have 3 lives. After a hit you are protected for 2 seconds (the fish blinks). With no lives left
+  you can try the level again or go back to the menu.
+
 ## Architecture
 Browser -> our Node server -> Fish Game API.
 - Accounts: passwords are saved only as salted scrypt hashes (`services/users.js`).
@@ -37,3 +44,5 @@ Browser -> our Node server -> Fish Game API.
 - Day 2: reef level with rock collisions, two gates, a treasure chest and a timer.
 - Day 3: Fish API puzzles at the gates (through our own server).
 - Day 4: accounts, hashed passwords, login with remember-me cookie, menus, saved high scores.
+- Day 5: sea mines, predator fish that chase the player, lives and a game over box.
+- Next: more levels.

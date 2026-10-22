@@ -3,9 +3,10 @@
 //
 // The 3D reef is drawn all the time. The state decides what happens:
 //   'menu'     a menu screen is on top and the camera slowly circles the start
-//   'playing'  the player swims
-//   'puzzle'   a gate puzzle window is open (the fish and the timer pause)
+//   'playing'  the player swims (mines and predators are active)
+//   'puzzle'   a gate puzzle window is open (everything pauses)
 //   'complete' the treasure was reached
+//   'dead'     all lives were lost
 
 
 import * as THREE from 'three';
@@ -13,6 +14,7 @@ import { createWorld } from './world.js';
 import { createLevel1, KEEP_CLEAR, START } from './level1.js';
 import { Player, PLAYER_RADIUS } from './player.js';
 import { resolveCollisions } from './physics.js';
+import { updateHazards } from './hazards.js';
 import { consumePress, endFrame } from './input.js';
 import { askPuzzle, closePuzzle } from './puzzle.js';
 import { submitScore, setUnauthorizedHandler } from './api.js';
@@ -20,6 +22,8 @@ import { initScreens, showScreen, showStart, openScores } from './screens.js';
 import * as ui from './ui.js';
 
 const WATER_COLOUR = 0x1a6fa8;
+const START_LIVES = 3;
+const PROTECTION_SECONDS = 2; // after being hurt the fish cannot be hurt again for a moment
 
 // the renderer draws the 3D scene onto the canvas
 const canvas = document.getElementById('game');
@@ -50,26 +54,35 @@ window.addEventListener('resize', () => {
 });
 
 let state = 'menu';
-let elapsed = 0;   // seconds spent swimming in this attempt (paused during puzzles)
-let mistakes = 0;  // wrong puzzle answers in this attempt
+let elapsed = 0;     // seconds spent swimming in this attempt (paused during puzzles)
+let mistakes = 0;    // wrong puzzle answers in this attempt
+let lives = START_LIVES;
+let protection = 0;  // seconds of protection left after being hurt
 
 /** Back to the idle state behind the menu screens. */
 function resetToMenuState() {
   state = 'menu';
   ui.hideMessage();
   ui.hideComplete();
+  ui.hideDead();
+  level.reset();
   player.reset(START);
+  player.group.visible = true;
 }
 
 /** Starts (or restarts) the level. */
 function restart() {
   player.reset(START);
+  player.group.visible = true;
   player.snapCamera(camera);
   level.reset();
   elapsed = 0;
   mistakes = 0;
+  lives = START_LIVES;
+  protection = 0;
   state = 'playing';
   ui.hideComplete();
+  ui.hideDead();
 }
 
 function startGame() {
@@ -79,7 +92,7 @@ function startGame() {
 
 /** The player pressed E at a closed gate: show the Fish puzzle and open the gate if it is solved. */
 async function solveGate(gate) {
-  state = 'puzzle'; // the fish and the timer pause while the puzzle is open
+  state = 'puzzle'; // everything pauses while the puzzle is open
   ui.hideMessage();
   const result = await askPuzzle(); // browser -> our server -> Fish Game API
   if (state !== 'puzzle') {
@@ -109,11 +122,44 @@ function finishLevel() {
     .catch((error) => ui.setScoreResult(`Score not saved: ${error.message}`));
 }
 
+/** A mine or a predator hurt the player. */
+function hurtPlayer(hit) {
+  lives -= 1;
+  protection = PROTECTION_SECONDS;
+  ui.flashDamage();
+  player.knockback(hit.from.x, hit.from.y, hit.from.z, hit.kind === 'mine' ? 4 : 5);
+  resolveCollisions(player.position, PLAYER_RADIUS, colliders);
+  if (lives <= 0) {
+    state = 'dead';
+    player.group.visible = true;
+    ui.hideMessage();
+    ui.showDead(hit.kind === 'mine' ? 'You hit a mine!' : 'A predator caught you!', {
+      onRetry: restart,
+      onMenu: () => { resetToMenuState(); showScreen('menu'); },
+    });
+  }
+}
+
 /** Game rules for one frame while the player is swimming. */
 function playFrame(dt) {
   elapsed += dt;
   player.update(dt);
   resolveCollisions(player.position, PLAYER_RADIUS, colliders);
+
+  // mines and predators
+  protection = Math.max(0, protection - dt);
+  const hit = updateHazards(level, player.position, PLAYER_RADIUS, dt, colliders, protection <= 0);
+  if (hit) {
+    hurtPlayer(hit);
+  }
+  // the fish blinks while it is protected
+  player.group.visible = protection <= 0 || Math.floor(protection * 10) % 2 === 0;
+
+  const opened = level.gates.filter((g) => g.opened).length;
+  ui.setStatus(lives, opened, level.gates.length, mistakes, elapsed);
+  if (state !== 'playing') {
+    return; // the player was just defeated
+  }
 
   // is the fish at a closed gate?
   const gate = level.gates.find((g) => !g.opened && g.isNear(player.position));
@@ -130,9 +176,6 @@ function playFrame(dt) {
   if (state === 'playing' && level.chest.isNear(player.position)) {
     finishLevel();
   }
-
-  const opened = level.gates.filter((g) => g.opened).length;
-  ui.setStatus(opened, level.gates.length, mistakes, elapsed);
 }
 
 /** Behind the menus the camera slowly circles the fish. */
@@ -163,7 +206,7 @@ function animate() {
   const dt = Math.min(clock.getDelta(), 0.05); // seconds since the last frame (capped)
 
   world.update(clock.elapsedTime, dt);
-  level.update(clock.elapsedTime);
+  level.update(clock.elapsedTime, dt);
   if (state === 'playing') {
     playFrame(dt);
   }
