@@ -8,9 +8,11 @@
 //      GET  /api/me                 -> { username }
 //      POST /api/puzzle             -> gets a puzzle from the Fish Game API, returns { id, image }
 //      POST /api/puzzle/:id/answer  { guess }  -> { correct }
-//      POST /api/scores             { seconds, mistakes } -> saves the score of a finished level
-//      GET  /api/scores             -> the high score table
+//      POST /api/scores             { level, seconds, mistakes } -> saves the score of a finished level
+//      GET  /api/scores?level=1..N  -> the high score table of a level (level=all: the overall table)
+//      GET  /api/progress           -> which levels are unlocked and the player's best scores
 //    Everything except register, login, logout and the static files needs a logged-in player.
+
 
 import express from 'express';
 import path from 'node:path';
@@ -20,12 +22,12 @@ import { PuzzleStore } from './services/puzzleStore.js';
 import { UserStore } from './services/users.js';
 import { SessionStore, COOKIE_NAME } from './services/sessions.js';
 import { ScoreStore } from './services/scores.js';
+import { LEVEL_RULES, LEVEL_COUNT } from './services/levelRules.js';
 import { LoginLimiter } from './services/loginLimiter.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data'); // not uploaded to GitHub
-const GATES_PER_LEVEL = 2; // a score is only accepted after this many puzzles were solved
 
 const users = new UserStore(DATA_DIR);
 const sessions = new SessionStore(DATA_DIR);
@@ -165,23 +167,43 @@ app.post('/api/puzzle/:id/answer', requireLogin, (req, res) => {
 // ---- score routes ----
 
 app.post('/api/scores', requireLogin, (req, res) => {
-  const { seconds, mistakes } = req.body ?? {};
-  // never trust the browser: check that the numbers are sensible
-  if (!Number.isFinite(seconds) || seconds < 8 || seconds > 3600
+  const { level, seconds, mistakes } = req.body ?? {};
+  if (!Number.isInteger(level) || level < 1 || level > LEVEL_COUNT) {
+    return res.status(400).json({ error: 'Unknown level.' });
+  }
+  const rule = LEVEL_RULES[level - 1];
+  // a level can only be played (and scored) after the one before it was finished
+  if (level > scores.unlockedLevel(req.user)) {
+    return res.status(403).json({ error: 'That level is still locked.' });
+  }
+  // never trust the browser: check that the numbers are sensible for this level
+  if (!Number.isFinite(seconds) || seconds < rule.minSeconds || seconds > 3600
       || !Number.isInteger(mistakes) || mistakes < 0 || mistakes > 100) {
     return res.status(400).json({ error: 'That result does not look valid.' });
   }
-  // the player must really have solved the gate puzzles on this server
+  // the player must really have solved this level's gate puzzles on this server
   const solved = solvedPuzzles.get(req.user) ?? 0;
-  if (solved < GATES_PER_LEVEL) {
-    return res.status(400).json({ error: 'Solve both gate puzzles before saving a score.' });
+  if (solved < rule.gates) {
+    return res.status(400).json({ error: `Solve all ${rule.gates} gate puzzles before saving a score.` });
   }
-  solvedPuzzles.set(req.user, solved - GATES_PER_LEVEL);
-  res.json(scores.submit(req.user, seconds, mistakes));
+  solvedPuzzles.set(req.user, solved - rule.gates);
+  res.json(scores.submit(req.user, level, seconds, mistakes));
 });
 
 app.get('/api/scores', requireLogin, (req, res) => {
-  res.json({ scores: scores.top(10), me: scores.rankOf(req.user) });
+  const which = String(req.query.level ?? '1');
+  if (which === 'all') {
+    return res.json({ level: 'all', scores: scores.overall(10), me: scores.overallRank(req.user) });
+  }
+  const level = Number(which);
+  if (!Number.isInteger(level) || level < 1 || level > LEVEL_COUNT) {
+    return res.status(400).json({ error: 'Unknown level.' });
+  }
+  res.json({ level, scores: scores.top(level, 10), me: scores.rankOf(req.user, level) });
+});
+
+app.get('/api/progress', requireLogin, (req, res) => {
+  res.json(scores.progress(req.user));
 });
 
 // anything unexpected (for example broken JSON) gets a short JSON reply
