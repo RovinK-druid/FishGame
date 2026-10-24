@@ -8,7 +8,7 @@ The Fish Game API (https://marcconrad.com/uob/fish/doc.php) provides the checkpo
 2. In this folder run: `npm install`
 3. Start the server: `npm start`
 4. Open http://localhost:3000 in Chrome (do not open index.html directly)
-5. Create an account, log in and press Play.
+5. Create an account, log in, press Play and choose a level.
 
 ## Controls
 - W/S or Up/Down arrows: swim forward/back
@@ -16,17 +16,29 @@ The Fish Game API (https://marcconrad.com/uob/fish/doc.php) provides the checkpo
 - Space: up. Shift: down
 - E at a gate: open the fish-counting puzzle. Click or press 0-9 to answer. Esc closes it.
 
+## Levels
+| Level | Name | Gates | Mines | Predators |
+|-------|------|-------|-------|-----------|
+| 1 | The Shallows | 2 | 13 | 3 |
+| 2 | Kelp Maze | 3 | 18 | 4 (faster) |
+| 3 | Shark Alley | 4 (narrower) | 24 | 5 (fastest) |
+
+Finish a level to unlock the next one. The level data is in `public/js/levels.js`.
+
 ## How to play
-Swim from the start through two glowing gates to the treasure chest. Rock walls and closed gates
+Swim from the start through the glowing gates to the treasure chest. Rock walls and closed gates
 block the way. To open a gate, count the fish in a picture (ignore the treasure chests).
-Your score depends on your time and your mistakes; the best score of each player is saved.
 
 ## Dangers
 - Sea mines float in every area. Touching one makes it explode.
 - Predator fish patrol behind the walls. They chase you when you come close; they are slower than you
   and cannot swim through rocks or closed gates.
-- You have 3 lives. After a hit you are protected for 2 seconds (the fish blinks). With no lives left
-  you can try the level again or go back to the menu.
+- You have 3 lives per attempt. After a hit you are protected for 2 seconds (the fish blinks).
+
+## Scores
+Each level has its own score: 1000 points, minus 3 for every second slower than the level's par time,
+minus 50 for every wrong puzzle answer. Every player keeps their best score per level. There is a
+high score table for each level and an Overall table (the sum of the best scores).
 
 ## Architecture
 Browser -> our Node server -> Fish Game API.
@@ -35,8 +47,9 @@ Browser -> our Node server -> Fish Game API.
   (`services/sessions.js`). "Remember me" makes the cookie last 7 days.
 - Puzzles: the server asks the Fish API for a picture and keeps the answer itself. The browser only
   receives the picture and a random puzzle id (`services/fishApi.js`, `services/puzzleStore.js`).
-- Scores: calculated on the server, and only accepted after the gate puzzles were solved
-  (`services/scores.js`).
+- Scores and progress: calculated and checked on the server (`services/scores.js`,
+  `services/levelRules.js`). A score is only accepted after the level's puzzles were solved, and a level
+  can only be scored once the one before it has been finished.
 - Data files are written to `data/` (not uploaded to GitHub).
 
 ## Status
@@ -45,4 +58,4 @@ Browser -> our Node server -> Fish Game API.
 - Day 3: Fish API puzzles at the gates (through our own server).
 - Day 4: accounts, hashed passwords, login with remember-me cookie, menus, saved high scores.
 - Day 5: sea mines, predator fish that chase the player, lives and a game over box.
-- Next: more levels.
+- Day 6: three levels, level select with unlocking, per-level and overall high scores.

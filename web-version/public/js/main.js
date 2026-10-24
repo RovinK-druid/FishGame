@@ -1,6 +1,7 @@
 // main.js - starts the game: creates the renderer, scene and camera, then runs the game loop.
 // It connects the other modules; the details live in them.
 //
+// All levels are built when the page loads, but only one is shown at a time.
 // The 3D reef is drawn all the time. The state decides what happens:
 //   'menu'     a menu screen is on top and the camera slowly circles the start
 //   'playing'  the player swims (mines and predators are active)
@@ -11,7 +12,8 @@
 
 import * as THREE from 'three';
 import { createWorld } from './world.js';
-import { createLevel1, KEEP_CLEAR, START } from './level1.js';
+import { LEVELS, KEEP_CLEAR } from './levels.js';
+import { createLevel } from './level.js';
 import { Player, PLAYER_RADIUS } from './player.js';
 import { resolveCollisions } from './physics.js';
 import { updateHazards } from './hazards.js';
@@ -39,12 +41,23 @@ scene.fog = new THREE.FogExp2(WATER_COLOUR, 0.025);
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 300);
 
 const world = createWorld(scene, KEEP_CLEAR);
-const level = createLevel1(scene);
-const player = new Player(scene, START);
-player.snapCamera(camera);
+const levels = LEVELS.map((def) => createLevel(scene, def));
 
-// everything the fish can bump into
-const colliders = [...world.colliders, ...level.colliders];
+let levelIndex = 0;
+let level = levels[0];
+let colliders = [];
+
+/** Makes one level the active one: only it is shown, and only its walls and gates block the fish. */
+function selectLevel(index) {
+  levelIndex = index;
+  levels.forEach((l, i) => l.setActive(i === index));
+  level = levels[index];
+  colliders = [...world.colliders, ...level.colliders];
+}
+selectLevel(0);
+
+const player = new Player(scene, level.def.start);
+player.snapCamera(camera);
 
 // EVENT: keep the picture correct when the browser window changes size
 window.addEventListener('resize', () => {
@@ -59,20 +72,21 @@ let mistakes = 0;    // wrong puzzle answers in this attempt
 let lives = START_LIVES;
 let protection = 0;  // seconds of protection left after being hurt
 
-/** Back to the idle state behind the menu screens. */
+/** Back to the idle state behind the menu screens (the first level is shown behind the menus). */
 function resetToMenuState() {
   state = 'menu';
   ui.hideMessage();
   ui.hideComplete();
   ui.hideDead();
+  selectLevel(0);
   level.reset();
-  player.reset(START);
+  player.reset(level.def.start);
   player.group.visible = true;
 }
 
-/** Starts (or restarts) the level. */
+/** Starts (or restarts) the current level. */
 function restart() {
-  player.reset(START);
+  player.reset(level.def.start);
   player.group.visible = true;
   player.snapCamera(camera);
   level.reset();
@@ -85,7 +99,9 @@ function restart() {
   ui.hideDead();
 }
 
-function startGame() {
+/** Starts a level (index 0 is level 1). */
+function startGame(index) {
+  selectLevel(index);
   restart();
   showScreen(null); // hide the menu screens, show only the game
 }
@@ -109,15 +125,19 @@ async function solveGate(gate) {
 function finishLevel() {
   state = 'complete';
   ui.hideMessage();
-  ui.showComplete(elapsed, mistakes, {
+  const number = levelIndex + 1;
+  const hasNext = number < levels.length;
+  ui.showComplete({ levelNumber: number, seconds: elapsed, mistakes, hasNext }, {
+    onNext: () => startGame(levelIndex + 1),
     onRestart: restart,
-    onScores: () => { resetToMenuState(); openScores(); },
+    onScores: () => { resetToMenuState(); openScores(number); },
     onMenu: () => { resetToMenuState(); showScreen('menu'); },
   });
-  submitScore(Math.round(elapsed), mistakes)
+  submitScore(number, Math.round(elapsed), mistakes)
     .then((result) => {
       const best = result.personalBest ? '  -  New personal best!' : '';
-      ui.setScoreResult(`Score: ${result.score}${best}  (rank ${result.rank})`);
+      const unlocked = result.newlyUnlocked ? `  -  Level ${result.newlyUnlocked} unlocked!` : '';
+      ui.setScoreResult(`Score: ${result.score}${best}  (rank ${result.rank})${unlocked}`);
     })
     .catch((error) => ui.setScoreResult(`Score not saved: ${error.message}`));
 }
@@ -156,7 +176,7 @@ function playFrame(dt) {
   player.group.visible = protection <= 0 || Math.floor(protection * 10) % 2 === 0;
 
   const opened = level.gates.filter((g) => g.opened).length;
-  ui.setStatus(lives, opened, level.gates.length, mistakes, elapsed);
+  ui.setStatus(levelIndex + 1, lives, opened, level.gates.length, mistakes, elapsed);
   if (state !== 'playing') {
     return; // the player was just defeated
   }
@@ -180,13 +200,14 @@ function playFrame(dt) {
 
 /** Behind the menus the camera slowly circles the fish. */
 function menuCamera(time) {
+  const start = level.def.start;
   const radius = 16;
   camera.position.set(
-    START.x + Math.cos(time * 0.15) * radius,
-    START.y + 3,
-    START.z + Math.sin(time * 0.15) * radius,
+    start.x + Math.cos(time * 0.15) * radius,
+    start.y + 3,
+    start.z + Math.sin(time * 0.15) * radius,
   );
-  camera.lookAt(START.x, START.y, START.z);
+  camera.lookAt(start.x, start.y, start.z);
 }
 
 // If the server says the session has ended, go back to the login screen.
