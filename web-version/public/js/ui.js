@@ -6,8 +6,10 @@ const statusEl = document.getElementById('status');
 const messageEl = document.getElementById('message');
 const flashEl = document.getElementById('damage-flash');
 const overlayEl = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlay-title');
 const overlayText = document.getElementById('overlay-text');
 const overlayScore = document.getElementById('overlay-score');
+const nextButton = document.getElementById('complete-next');
 const restartButton = document.getElementById('restart');
 const scoresButton = document.getElementById('complete-scores');
 const menuButton = document.getElementById('complete-menu');
@@ -22,10 +24,10 @@ function formatTime(seconds) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-export function setStatus(lives, gatesOpened, gatesTotal, mistakes, seconds) {
+export function setStatus(levelNumber, lives, gatesOpened, gatesTotal, mistakes, seconds) {
   const hearts = lives > 0 ? '\u2665 '.repeat(lives).trim() : '-';
-  statusEl.textContent =
-    `Lives ${hearts}   |   Gates ${gatesOpened}/${gatesTotal}   |   Mistakes ${mistakes}   |   Time ${formatTime(seconds)}`;
+  statusEl.textContent = `Level ${levelNumber}   |   Lives ${hearts}   |   Gates ${gatesOpened}/${gatesTotal}`
+    + `   |   Mistakes ${mistakes}   |   Time ${formatTime(seconds)}`;
 }
 
 export function showMessage(text) {
@@ -45,15 +47,20 @@ export function flashDamage() {
 }
 
 /**
- * Shows the "Treasure found" box. The handlers are called when the buttons are clicked:
- * { onRestart, onScores, onMenu }.
+ * Shows the result box when a level is finished.
+ * info: { levelNumber, seconds, mistakes, hasNext }
+ * handlers: { onNext, onRestart, onScores, onMenu } are called when the buttons are clicked.
  */
-export function showComplete(seconds, mistakes, handlers) {
-  const plural = mistakes === 1 ? 'mistake' : 'mistakes';
-  overlayText.textContent = `You reached the treasure in ${formatTime(seconds)} with ${mistakes} ${plural}.`;
+export function showComplete(info, handlers) {
+  const plural = info.mistakes === 1 ? 'mistake' : 'mistakes';
+  overlayTitle.textContent = info.hasNext ? `Level ${info.levelNumber} complete!` : 'You conquered the reef!';
+  overlayText.textContent =
+    `You reached the treasure in ${formatTime(info.seconds)} with ${info.mistakes} ${plural}.`;
   overlayScore.textContent = 'Saving your score...';
+  nextButton.style.display = info.hasNext ? '' : 'none';
   overlayEl.classList.add('visible');
-  // EVENT: the three buttons of the box
+  // EVENT: the buttons of the box
+  nextButton.onclick = () => { nextButton.blur(); handlers.onNext(); };
   restartButton.onclick = () => { restartButton.blur(); handlers.onRestart(); };
   scoresButton.onclick = () => { scoresButton.blur(); handlers.onScores(); };
   menuButton.onclick = () => { menuButton.blur(); handlers.onMenu(); };

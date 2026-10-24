@@ -51,5 +51,6 @@ export const requestPuzzle = () => request('POST', '/api/puzzle');
 export const submitAnswer = (id, guess) => request('POST', `/api/puzzle/${encodeURIComponent(id)}/answer`, { guess });
 
 // scores
-export const submitScore = (seconds, mistakes) => request('POST', '/api/scores', { seconds, mistakes });
-export const getScores = () => request('GET', '/api/scores');
+export const submitScore = (level, seconds, mistakes) => request('POST', '/api/scores', { level, seconds, mistakes });
+export const getScores = (level) => request('GET', `/api/scores?level=${encodeURIComponent(level)}`);
+export const getProgress = () => request('GET', '/api/progress');

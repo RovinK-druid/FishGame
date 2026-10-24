@@ -46,10 +46,11 @@
   <!-- shown when the treasure is reached -->
   <div id="overlay" class="overlay">
     <div class="box">
-      <h2>Treasure found!</h2>
+      <h2 id="overlay-title">Treasure found!</h2>
       <p id="overlay-text"></p>
       <p id="overlay-score" class="score"></p>
       <div class="buttons">
+        <button id="complete-next">Next level</button>
         <button id="restart">Play again</button>
         <button id="complete-scores">High scores</button>
         <button id="complete-menu">Main menu</button>
@@ -118,11 +119,21 @@
     </div>
   </div>
 
+  <div id="screen-levels" class="screen">
+    <div class="card wide">
+      <h1>Choose a level</h1>
+      <div id="levels-list"></div>
+      <p id="levels-note" class="note"></p>
+      <button id="levels-back">Back</button>
+    </div>
+  </div>
+
   <div id="screen-scores" class="screen">
     <div class="card wide">
       <h1>High scores</h1>
+      <div id="scores-tabs" class="tabs"></div>
       <table>
-        <thead><tr><th>Rank</th><th>Player</th><th>Score</th><th>Time</th></tr></thead>
+        <thead><tr id="scores-head"></tr></thead>
         <tbody id="scores-body"></tbody>
       </table>
       <p id="scores-note" class="note"></p>
@@ -133,12 +144,12 @@
   <div id="screen-help" class="screen">
     <div class="card wide">
       <h1>How to play</h1>
-      <p class="text">Swim through the two glowing gates to reach the treasure chest. Rock walls and closed gates block the way.</p>
+      <p class="text">Swim through the glowing gates to reach the treasure chest. Rock walls and closed gates block the way. Finish a level to unlock the next one: there are three, and each is harder than the last.</p>
       <p class="text">At a gate press <b>E</b> and count the <b>fish</b> in the picture (ignore the treasure chests). Pick the right number to open the gate.</p>
       <p class="text"><b>W / S</b> or <b>&uarr; / &darr;</b> swim forward / back &nbsp; <b>A / D</b> or <b>&larr; / &rarr;</b> turn<br>
         <b>Space</b> swim up &nbsp; <b>Shift</b> swim down</p>
       <p class="text">Beware of the floating <b>mines</b> and the <b>predator fish</b>: each hit costs one of your three lives. Predators chase you but are slower than you, and they cannot swim through rocks or closed gates.</p>
-      <p class="text">Your score is based on your time and your mistakes.</p>
+      <p class="text">Your score on each level is based on your time (compared with a par time for that level) and your mistakes. The Overall table adds up your best score of every level.</p>
       <button id="help-back">Back</button>
     </div>
   </div>
