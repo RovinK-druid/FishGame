@@ -1,15 +1,17 @@
 // gate.js - a checkpoint gate: two glowing posts and a see-through barrier across a gap in a wall.
 // While the gate is closed the barrier blocks the fish. open() lets the fish through.
-// Written with help from Claude (AI assistant).
+// Narrower gaps (a smaller `gapHalf`) make later levels harder.
+
 
 import * as THREE from 'three';
 
-export const GAP_HALF = 5.5; // half the width of the gap the gate closes
+export const GAP_HALF = 5.5; // default: half the width of the gap the gate closes
 
 export class Gate {
-  constructor(scene, x, z) {
+  constructor(scene, x, z, gapHalf = GAP_HALF) {
     this.x = x;
     this.z = z;
+    this.gapHalf = gapHalf;
     this.opened = false;
 
     this.postMaterial = new THREE.MeshStandardMaterial({
@@ -17,13 +19,13 @@ export class Gate {
     });
     for (const side of [-1, 1]) {
       const post = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.9, 26, 6), this.postMaterial);
-      post.position.set(x + side * (GAP_HALF + 0.1), 11, z);
+      post.position.set(x + side * (gapHalf + 0.1), 11, z);
       scene.add(post);
     }
 
     // the glowing barrier you cannot swim through
     this.barrier = new THREE.Mesh(
-      new THREE.PlaneGeometry(GAP_HALF * 2 + 1.6, 24),
+      new THREE.PlaneGeometry(gapHalf * 2 + 1.6, 24),
       new THREE.MeshBasicMaterial({
         color: 0x5ff0ff, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false,
       }),
@@ -32,7 +34,7 @@ export class Gate {
     scene.add(this.barrier);
 
     // the invisible box the physics uses (see physics.js)
-    this.collider = { type: 'box', x, y: 11, z, hx: GAP_HALF + 0.8, hy: 12, hz: 0.6, enabled: true };
+    this.collider = { type: 'box', x, y: 11, z, hx: gapHalf + 0.8, hy: 12, hz: 0.6, enabled: true };
   }
 
   /** Is the fish close enough to interact with this gate? */

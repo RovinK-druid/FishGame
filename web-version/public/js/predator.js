@@ -10,9 +10,9 @@ import { resolveCollisions } from './physics.js';
 
 const RADIUS = 1.8;        // size used for collisions and for catching the player
 const PATROL_SPEED = 4;    // units per second while wandering
-const CHASE_SPEED = 9;     // the player's top speed is 12
-const DETECT_RANGE = 32;   // starts chasing when the player is this close
-const LOSE_RANGE = 48;     // gives up when the player is this far away
+const CHASE_SPEED = 9;     // default; the player's top speed is 12 (a level can set its own speed)
+const DETECT_RANGE = 32;   // default: starts chasing when the player is this close
+const LOSE_GAP = 16;       // it gives up when the player is this much further away than that
 const CLIMB_SPEED = 3;
 const LIMIT = WORLD_SIZE / 2 - 3;
 
@@ -75,12 +75,15 @@ function buildPredator() {
 
 export class Predator {
   /**
-   * @param spawn { x, y, z, zone: { minX, maxX, minZ, maxZ } } where it starts and wanders
+   * @param spawn { x, y, z, zone: { minX, maxX, minZ, maxZ }, chaseSpeed?, detectRange? }
+   *              where it starts and wanders, and (optional) how fast and how far it notices
    * @param seed  makes each predator wander differently (but the same way every game)
    */
   constructor(scene, spawn, seed) {
     this.spawn = spawn;
     this.zone = spawn.zone;
+    this.chaseSpeed = spawn.chaseSpeed ?? CHASE_SPEED;
+    this.detectRange = spawn.detectRange ?? DETECT_RANGE;
     this.rand = seededRandom(1000 + seed);
     this.group = buildPredator();
     this.group.rotation.order = 'YXZ';
@@ -147,9 +150,9 @@ export class Predator {
     const distance = p.distanceTo(playerPos);
 
     // decide: patrol or chase (it gives up at a longer distance than it notices at)
-    if (this.state === 'patrol' && this.cooldown <= 0 && distance < DETECT_RANGE) {
+    if (this.state === 'patrol' && this.cooldown <= 0 && distance < this.detectRange) {
       this.state = 'chase';
-    } else if (this.state === 'chase' && (distance > LOSE_RANGE || this.cooldown > 0)) {
+    } else if (this.state === 'chase' && (distance > this.detectRange + LOSE_GAP || this.cooldown > 0)) {
       this.state = 'patrol';
     }
 
@@ -157,7 +160,7 @@ export class Predator {
     let tx, ty, tz, speed, turnRate;
     if (this.state === 'chase') {
       tx = playerPos.x; ty = playerPos.y; tz = playerPos.z;
-      speed = CHASE_SPEED;
+      speed = this.chaseSpeed;
       turnRate = 1.7;
     } else {
       if (!this.target || p.distanceTo(this.target) < 3) {
